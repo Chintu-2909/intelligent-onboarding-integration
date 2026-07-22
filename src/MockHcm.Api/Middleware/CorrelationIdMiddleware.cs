@@ -1,18 +1,31 @@
+using System.Text.RegularExpressions;
 using Serilog.Context;
 
 namespace MockHcm.Api.Middleware;
 
 public sealed class CorrelationIdMiddleware(
-    RequestDelegate next)
+    RequestDelegate next,
+    ILogger<CorrelationIdMiddleware> logger)
 {
-    public const string HeaderName = "X-Correlation-ID";
+    public const string HeaderName =
+        "X-Correlation-ID";
 
-    public async Task InvokeAsync(HttpContext context)
+    private const int MaximumLength = 64;
+
+    private static readonly Regex ValidCorrelationIdPattern =
+        new(
+            "^[A-Za-z0-9-]+$",
+            RegexOptions.Compiled |
+            RegexOptions.CultureInvariant);
+
+    public async Task InvokeAsync(
+        HttpContext context)
     {
         var correlationId =
             GetOrCreateCorrelationId(context);
 
-        context.TraceIdentifier = correlationId;
+        context.TraceIdentifier =
+            correlationId;
 
         context.Response.OnStarting(() =>
         {
@@ -30,19 +43,46 @@ public sealed class CorrelationIdMiddleware(
         }
     }
 
-    private static string GetOrCreateCorrelationId(
+    private string GetOrCreateCorrelationId(
         HttpContext context)
     {
         var incomingCorrelationId =
             context.Request.Headers[HeaderName]
                 .FirstOrDefault();
 
-        if (!string.IsNullOrWhiteSpace(
+        if (string.IsNullOrWhiteSpace(
                 incomingCorrelationId))
         {
-            return incomingCorrelationId.Trim();
+            return CreateCorrelationId();
         }
 
-        return Guid.NewGuid().ToString("N");
+        var trimmedCorrelationId =
+            incomingCorrelationId.Trim();
+
+        if (IsValidCorrelationId(
+                trimmedCorrelationId))
+        {
+            return trimmedCorrelationId;
+        }
+
+        logger.LogWarning(
+            "Invalid incoming correlation ID was replaced with a generated value");
+
+        return CreateCorrelationId();
+    }
+
+    private static bool IsValidCorrelationId(
+        string correlationId)
+    {
+        return
+            correlationId.Length <= MaximumLength &&
+            ValidCorrelationIdPattern.IsMatch(
+                correlationId);
+    }
+
+    private static string CreateCorrelationId()
+    {
+        return Guid.NewGuid()
+            .ToString("N");
     }
 }

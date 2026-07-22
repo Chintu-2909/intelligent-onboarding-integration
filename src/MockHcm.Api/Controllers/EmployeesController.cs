@@ -16,6 +16,7 @@ public sealed class EmployeesController : ControllerBase
         new(StringComparer.OrdinalIgnoreCase);
 
     [HttpPost]
+    [RequestSizeLimit(65_536)]
     [ProducesResponseType(
         typeof(CreateEmployeeResponse),
         StatusCodes.Status201Created)]
