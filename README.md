@@ -274,11 +274,17 @@ The model is intentionally kept advisory, not authoritative:
 
 ## Screenshots
 
-Drop screenshots into docs/images/ and they'll show up here:
+### Operations Dashboard
 
-![Operations dashboard](docs/images/dashboard-overview.png)
-![Employee onboarding form](docs/images/onboarding-form.png)
-![Grounded AI failure guidance](docs/images/ai-explanation.png)
+docs/images/dashboard-overview.png
+
+### Employee Onboarding Form
+
+docs/images/onboarding-form.png
+
+### Grounded AI Failure Guidance
+
+docs/images/ai-explanation.png
 
 ## Author
 
